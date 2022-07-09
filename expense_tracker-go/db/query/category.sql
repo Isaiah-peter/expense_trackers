@@ -4,12 +4,16 @@ WHERE id = $1 LIMIT 1;
 
 -- name: ListCategories :many
 SELECT * FROM categories
-ORDER BY name;
+ORDER BY name
+LIMIT $1
+OFFSET $2;
 
 -- name: ListCategoryByUserId :many
 SELECT * FROM categories
 WHERE user_id = $1
-ORDER BY name;
+ORDER BY name
+LIMIT $1
+OFFSET $2;
 
 -- name: CreateCategory :one
 INSERT INTO categories (

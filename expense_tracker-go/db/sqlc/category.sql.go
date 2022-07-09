@@ -71,10 +71,17 @@ func (q *Queries) GetCategory(ctx context.Context, id int32) (Category, error) {
 const listCategories = `-- name: ListCategories :many
 SELECT id, user_id, icon, name, created_at, updated_at FROM categories
 ORDER BY name
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
-	rows, err := q.db.QueryContext(ctx, listCategories)
+type ListCategoriesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListCategories(ctx context.Context, arg ListCategoriesParams) ([]Category, error) {
+	rows, err := q.db.QueryContext(ctx, listCategories, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -107,10 +114,17 @@ const listCategoryByUserId = `-- name: ListCategoryByUserId :many
 SELECT id, user_id, icon, name, created_at, updated_at FROM categories
 WHERE user_id = $1
 ORDER BY name
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) ListCategoryByUserId(ctx context.Context, userID sql.NullInt32) ([]Category, error) {
-	rows, err := q.db.QueryContext(ctx, listCategoryByUserId, userID)
+type ListCategoryByUserIdParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListCategoryByUserId(ctx context.Context, arg ListCategoryByUserIdParams) ([]Category, error) {
+	rows, err := q.db.QueryContext(ctx, listCategoryByUserId, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -83,10 +83,17 @@ func (q *Queries) GetTransaction(ctx context.Context, id int32) (Transaction, er
 const listTransactions = `-- name: ListTransactions :many
 SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
 ORDER BY created_at
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) ListTransactions(ctx context.Context) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactions)
+type ListTransactionsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactions, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +128,17 @@ const listTransactionsByCategoryID = `-- name: ListTransactionsByCategoryID :man
 SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
 WHERE category_id = $1
 ORDER BY created_at
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) ListTransactionsByCategoryID(ctx context.Context, categoryID sql.NullInt32) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactionsByCategoryID, categoryID)
+type ListTransactionsByCategoryIDParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListTransactionsByCategoryID(ctx context.Context, arg ListTransactionsByCategoryIDParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByCategoryID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -159,10 +173,17 @@ const listTransactionsByUserId = `-- name: ListTransactionsByUserId :many
 SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
 WHERE user_id = $1
 ORDER BY created_at
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) ListTransactionsByUserId(ctx context.Context, userID sql.NullInt32) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactionsByUserId, userID)
+type ListTransactionsByUserIdParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListTransactionsByUserId(ctx context.Context, arg ListTransactionsByUserIdParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByUserId, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

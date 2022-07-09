@@ -4,17 +4,23 @@ WHERE id = $1 LIMIT 1;
 
 -- name: ListTransactions :many
 SELECT * FROM transactions
-ORDER BY created_at;
+ORDER BY created_at
+LIMIT $1
+OFFSET $2;
 
 -- name: ListTransactionsByUserId :many
 SELECT * FROM transactions
 WHERE user_id = $1
-ORDER BY created_at;
+ORDER BY created_at
+LIMIT $1
+OFFSET $2;
 
 -- name: ListTransactionsByCategoryID :many
 SELECT * FROM transactions
 WHERE category_id = $1
-ORDER BY created_at;
+ORDER BY created_at
+LIMIT $1
+OFFSET $2;
 
 -- name: CreateTransaction :one
 INSERT INTO transactions (
