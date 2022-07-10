@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -46,8 +47,9 @@ func TestUpdateUser(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 	arg := UpdateUserParams{
-		ID: user.ID,
+		ID:   user.ID,
 		Name: "james",
+		UpdatedAt: time.Now(),
 	}
 
 	err = testQueries.UpdateUser(ctx, arg)
@@ -71,16 +73,16 @@ func TestListUser(t *testing.T) {
 	}
 
 	arg := ListUsersParams{
-		Limit: 5,
+		Limit:  5,
 		Offset: 5,
 	}
 
 	users, err := testQueries.ListUsers(ctx, arg)
-	
+
 	require.NoError(t, err)
 	require.Len(t, users, 5)
 
-	for _, user := range(users) {
+	for _, user := range users {
 		require.NotEmpty(t, user)
 	}
 }

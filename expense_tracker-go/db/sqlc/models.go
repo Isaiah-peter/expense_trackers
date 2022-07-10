@@ -5,8 +5,8 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
+	"time"
 )
 
 type TransactionStatue string
@@ -29,29 +29,29 @@ func (e *TransactionStatue) Scan(src interface{}) error {
 }
 
 type Category struct {
-	ID        int32          `json:"id"`
-	UserID    sql.NullInt32  `json:"user_id"`
-	Icon      sql.NullString `json:"icon"`
-	Name      string         `json:"name"`
-	CreatedAt sql.NullTime   `json:"created_at"`
-	UpdatedAt sql.NullTime   `json:"updated_at"`
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	Icon      string    `json:"icon"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type Transaction struct {
-	ID         int32         `json:"id"`
-	CategoryID sql.NullInt32 `json:"category_id"`
-	UserID     sql.NullInt32 `json:"user_id"`
+	ID         int32 `json:"id"`
+	CategoryID int32 `json:"category_id"`
+	UserID     int32 `json:"user_id"`
 	// but nagative and positive number
 	Ammout    int64             `json:"ammout"`
 	Notes     string            `json:"notes"`
-	CreatedAt sql.NullTime      `json:"created_at"`
-	UpdatedAt sql.NullTime      `json:"updated_at"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 	Status    TransactionStatue `json:"status"`
 }
 
 type User struct {
-	ID        int32        `json:"id"`
-	Name      string       `json:"name"`
-	CreatedAt sql.NullTime `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -22,5 +22,5 @@ WHERE id = $1;
 
 -- name: UpdateUser :exec
 UPDATE users
-SET name = $2
+SET (name, updated_at) = ($2, $3)
 WHERE id = $1;

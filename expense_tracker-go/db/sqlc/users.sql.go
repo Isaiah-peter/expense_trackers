@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -75,7 +76,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	items := []User{}
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
@@ -99,16 +100,17 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-SET name = $2
+SET (name, updated_at) = ($2, $3)
 WHERE id = $1
 `
 
 type UpdateUserParams struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser, arg.ID, arg.Name)
+	_, err := q.db.ExecContext(ctx, updateUser, arg.ID, arg.Name, arg.UpdatedAt)
 	return err
 }

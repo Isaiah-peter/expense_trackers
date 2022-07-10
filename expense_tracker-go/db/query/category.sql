@@ -12,8 +12,8 @@ OFFSET $2;
 SELECT * FROM categories
 WHERE user_id = $1
 ORDER BY name
-LIMIT $1
-OFFSET $2;
+LIMIT $2
+OFFSET $3;
 
 -- name: CreateCategory :one
 INSERT INTO categories (
@@ -29,5 +29,5 @@ WHERE id = $1;
 
 -- name: UpdateCategory :exec
 UPDATE categories
-SET (name, icon) = ($2, $3)
+SET (name, icon, updated_at) = ($2, $3, $4)
 WHERE id = $1;

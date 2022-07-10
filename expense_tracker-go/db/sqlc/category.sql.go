@@ -7,7 +7,7 @@ package db
 
 import (
 	"context"
-	"database/sql"
+	"time"
 )
 
 const createCategory = `-- name: CreateCategory :one
@@ -20,9 +20,9 @@ RETURNING id, user_id, icon, name, created_at, updated_at
 `
 
 type CreateCategoryParams struct {
-	UserID sql.NullInt32  `json:"user_id"`
-	Icon   sql.NullString `json:"icon"`
-	Name   string         `json:"name"`
+	UserID int32  `json:"user_id"`
+	Icon   string `json:"icon"`
+	Name   string `json:"name"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
@@ -86,7 +86,7 @@ func (q *Queries) ListCategories(ctx context.Context, arg ListCategoriesParams) 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Category
+	items := []Category{}
 	for rows.Next() {
 		var i Category
 		if err := rows.Scan(
@@ -114,22 +114,23 @@ const listCategoryByUserId = `-- name: ListCategoryByUserId :many
 SELECT id, user_id, icon, name, created_at, updated_at FROM categories
 WHERE user_id = $1
 ORDER BY name
-LIMIT $1
-OFFSET $2
+LIMIT $2
+OFFSET $3
 `
 
 type ListCategoryByUserIdParams struct {
+	UserID int32 `json:"user_id"`
 	Limit  int32 `json:"limit"`
 	Offset int32 `json:"offset"`
 }
 
 func (q *Queries) ListCategoryByUserId(ctx context.Context, arg ListCategoryByUserIdParams) ([]Category, error) {
-	rows, err := q.db.QueryContext(ctx, listCategoryByUserId, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listCategoryByUserId, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Category
+	items := []Category{}
 	for rows.Next() {
 		var i Category
 		if err := rows.Scan(
@@ -155,17 +156,23 @@ func (q *Queries) ListCategoryByUserId(ctx context.Context, arg ListCategoryByUs
 
 const updateCategory = `-- name: UpdateCategory :exec
 UPDATE categories
-SET (name, icon) = ($2, $3)
+SET (name, icon, updated_at) = ($2, $3, $4)
 WHERE id = $1
 `
 
 type UpdateCategoryParams struct {
-	ID   int32          `json:"id"`
-	Name string         `json:"name"`
-	Icon sql.NullString `json:"icon"`
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	Icon      string    `json:"icon"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, updateCategory, arg.ID, arg.Name, arg.Icon)
+	_, err := q.db.ExecContext(ctx, updateCategory,
+		arg.ID,
+		arg.Name,
+		arg.Icon,
+		arg.UpdatedAt,
+	)
 	return err
 }

@@ -6,27 +6,27 @@ CREATE TYPE "transaction_statue" AS ENUM (
 CREATE TABLE "users" (
   "id" SERIAL PRIMARY KEY,
   "name" varchar NOT NULL,
-  "created_at" timestamptz DEFAULT (now()),
-  "updated_at" timestamptz DEFAULT (now())
+  "created_at" timestamptz DEFAULT (now()) NOT NULL,
+  "updated_at" timestamptz DEFAULT (now()) NOT NULL
 );
 
 CREATE TABLE "categories" (
   "id" SERIAL PRIMARY KEY,
-  "user_id" int,
-  "icon" varchar,
+  "user_id" int  NOT NULL,
+  "icon" varchar  NOT NULL,
   "name" varchar NOT NULL,
-  "created_at" timestamptz DEFAULT (now()),
-  "updated_at" timestamptz DEFAULT (now())
+  "created_at" timestamptz DEFAULT (now()) NOT NULL,
+  "updated_at" timestamptz DEFAULT (now()) NOT NULL
 );
 
 CREATE TABLE "transactions" (
   "id" SERIAL PRIMARY KEY,
-  "category_id" int,
-  "user_id" int,
+  "category_id" int  NOT NULL,
+  "user_id" int  NOT NULL,
   "ammout" bigint NOT NULL,
   "notes" text NOT NULL,
-  "created_at" timestamptz DEFAULT (now()),
-  "updated_at" timestamptz DEFAULT (now()),
+  "created_at" timestamptz DEFAULT (now()) NOT NULL,
+  "updated_at" timestamptz DEFAULT (now()) NOT NULL,
   "status" transaction_statue NOT NULL
 );
 
