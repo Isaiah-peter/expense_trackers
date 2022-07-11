@@ -12,17 +12,17 @@ import (
 
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO transactions (
-  user_id, category_id, ammout, notes, status
+  user_id, category_id, amount, notes, status
 ) VALUES (
   $1, $2, $3, $4, $5
 )
-RETURNING id, category_id, user_id, ammout, notes, created_at, updated_at, status
+RETURNING id, category_id, user_id, amount, notes, created_at, updated_at, status
 `
 
 type CreateTransactionParams struct {
 	UserID     int32             `json:"user_id"`
 	CategoryID int32             `json:"category_id"`
-	Ammout     int64             `json:"ammout"`
+	Amount     int64             `json:"amount"`
 	Notes      string            `json:"notes"`
 	Status     TransactionStatue `json:"status"`
 }
@@ -31,7 +31,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 	row := q.db.QueryRowContext(ctx, createTransaction,
 		arg.UserID,
 		arg.CategoryID,
-		arg.Ammout,
+		arg.Amount,
 		arg.Notes,
 		arg.Status,
 	)
@@ -40,7 +40,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.ID,
 		&i.CategoryID,
 		&i.UserID,
-		&i.Ammout,
+		&i.Amount,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -60,31 +60,29 @@ func (q *Queries) DeleteTransaction(ctx context.Context, id int32) error {
 }
 
 const getTotalAmount = `-- name: GetTotalAmount :many
-SELECT SUM(ammout) from transactions
+SELECT user_id, SUM(amount) from transactions
 WHERE user_id  = $1
-AND status = $2
-AND status = $3
+GROUP BY user_id
 `
 
-type GetTotalAmountParams struct {
-	UserID   int32             `json:"user_id"`
-	Status   TransactionStatue `json:"status"`
-	Status_2 TransactionStatue `json:"status_2"`
+type GetTotalAmountRow struct {
+	UserID int32 `json:"user_id"`
+	Sum    int64 `json:"sum"`
 }
 
-func (q *Queries) GetTotalAmount(ctx context.Context, arg GetTotalAmountParams) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, getTotalAmount, arg.UserID, arg.Status, arg.Status_2)
+func (q *Queries) GetTotalAmount(ctx context.Context, userID int32) ([]GetTotalAmountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTotalAmount, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []int64{}
+	items := []GetTotalAmountRow{}
 	for rows.Next() {
-		var sum int64
-		if err := rows.Scan(&sum); err != nil {
+		var i GetTotalAmountRow
+		if err := rows.Scan(&i.UserID, &i.Sum); err != nil {
 			return nil, err
 		}
-		items = append(items, sum)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -96,7 +94,7 @@ func (q *Queries) GetTotalAmount(ctx context.Context, arg GetTotalAmountParams) 
 }
 
 const getTransaction = `-- name: GetTransaction :one
-SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
+SELECT id, category_id, user_id, amount, notes, created_at, updated_at, status FROM transactions
 WHERE id = $1 LIMIT 1
 `
 
@@ -107,7 +105,7 @@ func (q *Queries) GetTransaction(ctx context.Context, id int32) (Transaction, er
 		&i.ID,
 		&i.CategoryID,
 		&i.UserID,
-		&i.Ammout,
+		&i.Amount,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -117,9 +115,10 @@ func (q *Queries) GetTransaction(ctx context.Context, id int32) (Transaction, er
 }
 
 const listTransactionByStatus = `-- name: ListTransactionByStatus :many
-SELECT SUM(amount) FROM transactions
+SELECT status, SUM(amount) FROM transactions
 WHERE user_id = $1
 AND status = $2
+GROUP BY status
 `
 
 type ListTransactionByStatusParams struct {
@@ -127,19 +126,24 @@ type ListTransactionByStatusParams struct {
 	Status TransactionStatue `json:"status"`
 }
 
-func (q *Queries) ListTransactionByStatus(ctx context.Context, arg ListTransactionByStatusParams) ([]int64, error) {
+type ListTransactionByStatusRow struct {
+	Status TransactionStatue `json:"status"`
+	Sum    int64             `json:"sum"`
+}
+
+func (q *Queries) ListTransactionByStatus(ctx context.Context, arg ListTransactionByStatusParams) ([]ListTransactionByStatusRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTransactionByStatus, arg.UserID, arg.Status)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []int64{}
+	items := []ListTransactionByStatusRow{}
 	for rows.Next() {
-		var sum int64
-		if err := rows.Scan(&sum); err != nil {
+		var i ListTransactionByStatusRow
+		if err := rows.Scan(&i.Status, &i.Sum); err != nil {
 			return nil, err
 		}
-		items = append(items, sum)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -151,7 +155,7 @@ func (q *Queries) ListTransactionByStatus(ctx context.Context, arg ListTransacti
 }
 
 const listTransactions = `-- name: ListTransactions :many
-SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
+SELECT id, category_id, user_id, amount, notes, created_at, updated_at, status FROM transactions
 ORDER BY created_at
 LIMIT $1
 OFFSET $2
@@ -175,7 +179,7 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 			&i.ID,
 			&i.CategoryID,
 			&i.UserID,
-			&i.Ammout,
+			&i.Amount,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -195,20 +199,21 @@ func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsPara
 }
 
 const listTransactionsByCategoryID = `-- name: ListTransactionsByCategoryID :many
-SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
+SELECT id, category_id, user_id, amount, notes, created_at, updated_at, status FROM transactions
 WHERE category_id = $1
 ORDER BY created_at
-LIMIT $1
-OFFSET $2
+LIMIT $2
+OFFSET $3
 `
 
 type ListTransactionsByCategoryIDParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	CategoryID int32 `json:"category_id"`
+	Limit      int32 `json:"limit"`
+	Offset     int32 `json:"offset"`
 }
 
 func (q *Queries) ListTransactionsByCategoryID(ctx context.Context, arg ListTransactionsByCategoryIDParams) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactionsByCategoryID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listTransactionsByCategoryID, arg.CategoryID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +225,7 @@ func (q *Queries) ListTransactionsByCategoryID(ctx context.Context, arg ListTran
 			&i.ID,
 			&i.CategoryID,
 			&i.UserID,
-			&i.Ammout,
+			&i.Amount,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -240,20 +245,21 @@ func (q *Queries) ListTransactionsByCategoryID(ctx context.Context, arg ListTran
 }
 
 const listTransactionsByUserId = `-- name: ListTransactionsByUserId :many
-SELECT id, category_id, user_id, ammout, notes, created_at, updated_at, status FROM transactions
+SELECT id, category_id, user_id, amount, notes, created_at, updated_at, status FROM transactions
 WHERE user_id = $1
 ORDER BY created_at
-LIMIT $1
-OFFSET $2
+LIMIT $2
+OFFSET $3
 `
 
 type ListTransactionsByUserIdParams struct {
+	UserID int32 `json:"user_id"`
 	Limit  int32 `json:"limit"`
 	Offset int32 `json:"offset"`
 }
 
 func (q *Queries) ListTransactionsByUserId(ctx context.Context, arg ListTransactionsByUserIdParams) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactionsByUserId, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listTransactionsByUserId, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +271,7 @@ func (q *Queries) ListTransactionsByUserId(ctx context.Context, arg ListTransact
 			&i.ID,
 			&i.CategoryID,
 			&i.UserID,
-			&i.Ammout,
+			&i.Amount,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -286,13 +292,13 @@ func (q *Queries) ListTransactionsByUserId(ctx context.Context, arg ListTransact
 
 const updateTransaction = `-- name: UpdateTransaction :exec
 UPDATE transactions
-SET (ammout, notes, category_id, updated_at) = ($2, $3, $4, $5)
+SET (amount, notes, category_id, updated_at) = ($2, $3, $4, $5)
 WHERE id = $1
 `
 
 type UpdateTransactionParams struct {
 	ID         int32     `json:"id"`
-	Ammout     int64     `json:"ammout"`
+	Amount     int64     `json:"amount"`
 	Notes      string    `json:"notes"`
 	CategoryID int32     `json:"category_id"`
 	UpdatedAt  time.Time `json:"updated_at"`
@@ -301,7 +307,7 @@ type UpdateTransactionParams struct {
 func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) error {
 	_, err := q.db.ExecContext(ctx, updateTransaction,
 		arg.ID,
-		arg.Ammout,
+		arg.Amount,
 		arg.Notes,
 		arg.CategoryID,
 		arg.UpdatedAt,

@@ -42,7 +42,7 @@ type Transaction struct {
 	CategoryID int32 `json:"category_id"`
 	UserID     int32 `json:"user_id"`
 	// but nagative and positive number
-	Ammout    int64             `json:"ammout"`
+	Amount    int64             `json:"amount"`
 	Notes     string            `json:"notes"`
 	CreatedAt time.Time         `json:"created_at"`
 	UpdatedAt time.Time         `json:"updated_at"`

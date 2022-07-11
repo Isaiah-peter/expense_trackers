@@ -23,7 +23,7 @@ CREATE TABLE "transactions" (
   "id" SERIAL PRIMARY KEY,
   "category_id" int  NOT NULL,
   "user_id" int  NOT NULL,
-  "ammout" bigint NOT NULL,
+  "amount" bigint NOT NULL,
   "notes" text NOT NULL,
   "created_at" timestamptz DEFAULT (now()) NOT NULL,
   "updated_at" timestamptz DEFAULT (now()) NOT NULL,
@@ -40,7 +40,7 @@ CREATE INDEX ON "transactions" ("user_id");
 
 CREATE INDEX ON "transactions" ("status");
 
-COMMENT ON COLUMN "transactions"."ammout" IS 'but nagative and positive number';
+COMMENT ON COLUMN "transactions"."amount" IS 'but nagative and positive number';
 
 ALTER TABLE "categories" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
