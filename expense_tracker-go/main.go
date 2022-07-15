@@ -6,8 +6,8 @@ import (
 
 	"github.com/Isaiah-peter/expense_tracker/api"
 	db "github.com/Isaiah-peter/expense_tracker/db/sqlc"
-	_ "github.com/lib/pq"
 	"github.com/Isaiah-peter/expense_tracker/util"
+	_ "github.com/lib/pq"
 )
 
 func main() {
